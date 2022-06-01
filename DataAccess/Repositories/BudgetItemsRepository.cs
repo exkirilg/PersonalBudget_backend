@@ -19,7 +19,7 @@ public class BudgetItemsRepository : IBudgetItemsRepository
         await connection.OpenAsync();
 
         return await connection.QueryFirstAsync<bool>(
-            "SELECT * FROM budget_items_equalexists(@Type, @Id, @Name)",
+            "SELECT * FROM budget_items_equalExists(@Type, @Id, @Name)",
             new { Type = (int)type, Id = id, Name = name });
     }
 
@@ -29,17 +29,17 @@ public class BudgetItemsRepository : IBudgetItemsRepository
         await connection.OpenAsync();
 
         return await connection.QueryFirstOrDefaultAsync<BudgetItem>(
-            "SELECT * FROM budget_items_getbyid(@Id)",
+            "SELECT * FROM budget_items_getById(@Id)",
             new { Id = id });
     }
 
-    public async Task<IEnumerable<IBudgetItem>> GetAllWithPagingAsync(int pageNumber, int pageSize, IEnumerable<OperationType> types)
+    public async Task<IEnumerable<IBudgetItem>> GetAllWithPagingAsync(IEnumerable<OperationType> types, int pageNumber, int pageSize)
     {
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         return await connection.QueryAsync<BudgetItem>(
-            "SELECT * FROM budget_items_getallwithpaging(@Types, @PageNumber, @PageSize)",
+            "SELECT * FROM budget_items_getAllWithPaging(@Types, @PageNumber, @PageSize)",
             new { Types = types.Select(t => (int)t).ToArray(), PageNumber = pageNumber, PageSize = pageSize });
     }
 

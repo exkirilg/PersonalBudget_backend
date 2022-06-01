@@ -1,5 +1,5 @@
 ﻿--Equal exists
-CREATE OR REPLACE FUNCTION budget_items_equalexists(type INT, id INT, name VARCHAR)
+CREATE OR REPLACE FUNCTION budget_items_equalExists(type INT, id INT, name VARCHAR)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
@@ -11,7 +11,7 @@ BEGIN
 END $$;
 
 --Get by id
-CREATE OR REPLACE FUNCTION budget_items_getbyid(id INT)
+CREATE OR REPLACE FUNCTION budget_items_getById(id INT)
 RETURNS TABLE(
 	item_id INT,
 	item_name VARCHAR,
@@ -27,7 +27,7 @@ BEGIN
 END $$;
 
 --Get all with paging
-CREATE OR REPLACE FUNCTION budget_items_getallwithpaging(types INT[], page_number INT, page_size INT)
+CREATE OR REPLACE FUNCTION budget_items_getAllWithPaging(types INT[], page_number INT, page_size INT)
 RETURNS TABLE(
 	item_id INT,
 	item_name VARCHAR,
