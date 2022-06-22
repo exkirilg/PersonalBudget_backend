@@ -29,21 +29,21 @@ public class BudgetItemsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllWithPaging([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAll()
     {
-        return Ok(await _repository.GetAllWithPagingAsync(Enum.GetValues<OperationType>(), pageNumber, pageSize));
+        return Ok(await _repository.GetAllAsync(Enum.GetValues<OperationType>()));
     }
 
     [HttpGet("incomes")]
-    public async Task<IActionResult> GetAllIncomesWithPaging([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAllIncomes()
     {
-        return Ok(await _repository.GetAllWithPagingAsync(new OperationType[] { OperationType.Income }, pageNumber, pageSize));
+        return Ok(await _repository.GetAllAsync(new OperationType[] { OperationType.Income }));
     }
 
     [HttpGet("expenses")]
-    public async Task<IActionResult> GetAllExpensesWithPaging([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAllExpenses()
     {
-        return Ok(await _repository.GetAllWithPagingAsync(new OperationType[] { OperationType.Expense }, pageNumber, pageSize));
+        return Ok(await _repository.GetAllAsync(new OperationType[] { OperationType.Expense }));
     }
 
     [HttpPost("incomes")]

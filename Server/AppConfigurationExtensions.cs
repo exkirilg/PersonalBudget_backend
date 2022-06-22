@@ -1,6 +1,7 @@
 ﻿using DataAccess.Repositories;
 using DbUp;
 using Domain.Interfaces.DataAccess;
+using Microsoft.OpenApi.Models;
 
 namespace Server;
 
@@ -9,12 +10,40 @@ public static class AppConfigurationExtensions
     public static void ConfigureWebApplicationBuilder(this WebApplicationBuilder builder)
     {
         builder.Services.AddControllers();
+        
+        builder.Services.AddHttpClient();
 
         #region Swagger/OpenAPI
 
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please enter a valid token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
+            });
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] {}
+                }
+            });
+        });
 
         #endregion
 
@@ -39,6 +68,28 @@ public static class AppConfigurationExtensions
         builder.Services.AddScoped<IBudgetOperationsRepository, BudgetOperationsRepository>();
 
         #endregion
+
+        #region CORS
+
+        builder.Services.AddCors(
+            options => options.AddPolicy("CorsPolicy", policy => policy
+            .AllowAnyMethod().AllowAnyHeader().WithOrigins(builder.Configuration["Frontend"])));
+
+        #endregion
+
+        #region Auth
+
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.Authority = builder.Configuration["Auth0:Authority"];
+            options.Audience = builder.Configuration["Auth0:Audience"];
+        });
+
+        #endregion
     }
     public static void ConfigureWebApplication(this WebApplication app)
     {
@@ -46,6 +97,8 @@ public static class AppConfigurationExtensions
 
         app.UseSwagger();
         app.UseSwaggerUI();
+
+        app.UseCors("CorsPolicy");
 
         app.UseAuthentication();
         app.UseAuthorization();

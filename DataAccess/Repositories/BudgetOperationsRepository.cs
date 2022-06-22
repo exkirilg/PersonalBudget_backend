@@ -34,15 +34,14 @@ public class BudgetOperationsRepository : IBudgetOperationsRepository
         )).FirstOrDefault();
     }
 
-    public async Task<IEnumerable<IBudgetOperation>> GetAllOverTimePeriodWithPagingAsync(
-        IEnumerable<OperationType> types, DateTime dateFrom, DateTime dateTo, int pageNumber, int pageSize)
+    public async Task<IEnumerable<IBudgetOperation>> GetAllOverTimePeriodAsync(IEnumerable<OperationType> types, DateTime dateFrom, DateTime dateTo)
     {
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         return await connection.QueryAsync<BudgetOperation, BudgetItem, BudgetOperation>(
             sql:
-                "SELECT * FROM budget_operations_getAllForPeriodExcludingEndWithPaging(@Types, @DateFrom, @DateTo, @PageNumber, @PageSize)",
+                "SELECT * FROM budget_operations_getAllForPeriod(@Types, @DateFrom, @DateTo)",
             map:
                 (operation, item) =>
                 {
@@ -52,7 +51,7 @@ public class BudgetOperationsRepository : IBudgetOperationsRepository
             splitOn:
                 "item_id",
             param:
-                new { Types = types.Select(t => (int)t).ToArray(), DateFrom = dateFrom, DateTo = dateTo, PageNumber = pageNumber, PageSize = pageSize }
+                new { Types = types.Select(t => (int)t).ToArray(), DateFrom = dateFrom, DateTo = dateTo }
         );
     }
 

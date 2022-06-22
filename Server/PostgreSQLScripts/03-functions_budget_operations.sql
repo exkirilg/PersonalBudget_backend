@@ -23,8 +23,8 @@ BEGIN
 			id);
 END $$;
 
---Get all with paging for period excluding end
-CREATE OR REPLACE FUNCTION budget_operations_getAllForPeriodExcludingEndWithPaging(types INT[], dateFrom TIMESTAMP WITH TIME ZONE, dateTo TIMESTAMP WITH TIME ZONE, page_number INT, page_size INT)
+--Get all for period
+CREATE OR REPLACE FUNCTION budget_operations_getAllForPeriod(types INT[], dateFrom TIMESTAMP WITH TIME ZONE, dateTo TIMESTAMP WITH TIME ZONE)
 RETURNS TABLE(
 	operation_id INT,
 	operation_date TIMESTAMP WITH TIME ZONE,
@@ -46,12 +46,8 @@ BEGIN
 			WHERE
 				budget_operations.type = ANY (%L::int[]) AND budget_operations.date >= %L AND budget_operations.date <= %L
 			ORDER BY
-				budget_operations.date
-			LIMIT
-				%s
-			OFFSET
-				%s',
-			types, dateFrom, dateTo, page_size, page_size * (page_number - 1));
+				budget_operations.date',
+			types, dateFrom, dateTo);
 END $$;
 
 --Post

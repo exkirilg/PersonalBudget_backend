@@ -33,14 +33,14 @@ public class BudgetItemsRepository : IBudgetItemsRepository
             new { Id = id });
     }
 
-    public async Task<IEnumerable<IBudgetItem>> GetAllWithPagingAsync(IEnumerable<OperationType> types, int pageNumber, int pageSize)
+    public async Task<IEnumerable<IBudgetItem>> GetAllAsync(IEnumerable<OperationType> types)
     {
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         return await connection.QueryAsync<BudgetItem>(
-            "SELECT * FROM budget_items_getAllWithPaging(@Types, @PageNumber, @PageSize)",
-            new { Types = types.Select(t => (int)t).ToArray(), PageNumber = pageNumber, PageSize = pageSize });
+            "SELECT * FROM budget_items_getAll(@Types)",
+            new { Types = types.Select(t => (int)t).ToArray() });
     }
 
     public async Task<IBudgetItem?> PostAsync(IBudgetItem entity)

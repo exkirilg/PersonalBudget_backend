@@ -32,21 +32,21 @@ public class BudgetOperationsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllOverTimePeriodWithPaging([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAllOverTimePeriod([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
     {
-        return Ok(await _repository.GetAllOverTimePeriodWithPagingAsync(Enum.GetValues<OperationType>(), dateFrom, dateTo, pageNumber, pageSize));
+        return Ok(await _repository.GetAllOverTimePeriodAsync(Enum.GetValues<OperationType>(), dateFrom, dateTo));
     }
 
     [HttpGet("incomes")]
-    public async Task<IActionResult> GetAllIncomesWithPaging([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAllIncomes([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
     {
-        return Ok(await _repository.GetAllOverTimePeriodWithPagingAsync(new OperationType[] { OperationType.Income }, dateFrom, dateTo, pageNumber, pageSize));
+        return Ok(await _repository.GetAllOverTimePeriodAsync(new OperationType[] { OperationType.Income }, dateFrom, dateTo));
     }
 
     [HttpGet("expenses")]
-    public async Task<IActionResult> GetAllExpensesWithPaging([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAllExpenses([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
     {
-        return Ok(await _repository.GetAllOverTimePeriodWithPagingAsync(new OperationType[] { OperationType.Expense }, dateFrom, dateTo, pageNumber, pageSize));
+        return Ok(await _repository.GetAllOverTimePeriodAsync(new OperationType[] { OperationType.Expense }, dateFrom, dateTo));
     }
 
     [HttpPost("incomes")]

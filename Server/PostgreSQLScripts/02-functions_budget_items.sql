@@ -26,8 +26,8 @@ BEGIN
 			id);
 END $$;
 
---Get all with paging
-CREATE OR REPLACE FUNCTION budget_items_getAllWithPaging(types INT[], page_number INT, page_size INT)
+--Get all
+CREATE OR REPLACE FUNCTION budget_items_getAll(types INT[])
 RETURNS TABLE(
 	item_id INT,
 	item_name VARCHAR,
@@ -38,8 +38,8 @@ AS $$
 BEGIN
 	RETURN QUERY
 		EXECUTE format(
-			'SELECT * FROM budget_items WHERE type = ANY (%L::int[]) ORDER BY name LIMIT %s OFFSET %s',
-			types, page_size, page_size * (page_number - 1));
+			'SELECT * FROM budget_items WHERE type = ANY (%L::int[]) ORDER BY name',
+			types);
 END $$;
 
 --Post
