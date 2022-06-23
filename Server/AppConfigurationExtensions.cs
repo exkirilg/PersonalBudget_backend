@@ -1,6 +1,8 @@
 ﻿using DataAccess.Repositories;
 using DbUp;
+using Domain.Interfaces.Cache;
 using Domain.Interfaces.DataAccess;
+using Domain.Models.Cache;
 using Microsoft.OpenApi.Models;
 
 namespace Server;
@@ -66,6 +68,14 @@ public static class AppConfigurationExtensions
 
         builder.Services.AddScoped<IBudgetItemsRepository, BudgetItemsRepository>();
         builder.Services.AddScoped<IBudgetOperationsRepository, BudgetOperationsRepository>();
+
+        #endregion
+
+        #region Cache
+
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<IBudgetItemsCache, BudgetItemsCache>();
+        builder.Services.AddSingleton<IBudgetOperationsCache, BudgetOperationsCache>();
 
         #endregion
 

@@ -1,6 +1,7 @@
 ﻿using Domain.DTO;
 using Domain.Enums;
 using Domain.Interfaces;
+using Domain.Interfaces.Cache;
 using Domain.Interfaces.DataAccess;
 using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -14,19 +15,35 @@ public class BudgetOperationsController : ControllerBase
     private readonly IBudgetOperationsRepository _repository;
     private readonly IBudgetItemsRepository _itemsRepository;
 
-    public BudgetOperationsController(IBudgetOperationsRepository repository, IBudgetItemsRepository itemsRepository)
+    private readonly IBudgetOperationsCache _cache;
+    private readonly IBudgetItemsCache _itemsCache;
+
+    public BudgetOperationsController(
+        IBudgetOperationsRepository repository, IBudgetItemsRepository itemsRepository,
+        IBudgetOperationsCache cache, IBudgetItemsCache itemsCache)
     {
         _repository = repository;
         _itemsRepository = itemsRepository;
+        _cache = cache;
+        _itemsCache = itemsCache;
+
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var result = await _repository.GetByIdAsync(id);
+        IBudgetOperation? result;
+
+        result = _cache.GetOperation(id);
+        if (result is not null)
+            return Ok(result);
+
+        result = await _repository.GetByIdAsync(id);
 
         if (result is null)
             return NotFound();
+
+        _cache.SetOperation(result);
 
         return Ok(result);
     }
@@ -34,19 +51,19 @@ public class BudgetOperationsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllOverTimePeriod([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
     {
-        return Ok(await _repository.GetAllOverTimePeriodAsync(Enum.GetValues<OperationType>(), dateFrom, dateTo));
+        return Ok(await GetOperations(dateFrom, dateTo));
     }
 
     [HttpGet("incomes")]
     public async Task<IActionResult> GetAllIncomes([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
     {
-        return Ok(await _repository.GetAllOverTimePeriodAsync(new OperationType[] { OperationType.Income }, dateFrom, dateTo));
+        return Ok(await GetOperations(dateFrom, dateTo, OperationType.Income));
     }
 
     [HttpGet("expenses")]
     public async Task<IActionResult> GetAllExpenses([FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTo)
     {
-        return Ok(await _repository.GetAllOverTimePeriodAsync(new OperationType[] { OperationType.Expense }, dateFrom, dateTo));
+        return Ok(await GetOperations(dateFrom, dateTo, OperationType.Expense));
     }
 
     [HttpPost("incomes")]
@@ -55,22 +72,14 @@ public class BudgetOperationsController : ControllerBase
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await _itemsRepository.GetByIdAsync(operationDTO.ItemId);
-
-        if (item is null || item.Type != OperationType.Income)
+        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Income);
+        if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no income with id: {operationDTO.ItemId}");
             return NotFound(ModelState);
         }
 
-        var result = await _repository.PostAsync(new BudgetOperation
-        {
-            Date = operationDTO.Date,
-            Type = OperationType.Income,
-            Sum = operationDTO.Sum,
-            Item = item
-        });
-        return Ok(result);
+        return Ok(await PostOperation(operationDTO, OperationType.Income, item));
     }
 
     [HttpPost("expenses")]
@@ -79,22 +88,14 @@ public class BudgetOperationsController : ControllerBase
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await _itemsRepository.GetByIdAsync(operationDTO.ItemId);
-
-        if (item is null || item.Type != OperationType.Expense)
+        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Expense);
+        if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no expense with id: {operationDTO.ItemId}");
             return NotFound(ModelState);
         }
 
-        var result = await _repository.PostAsync(new BudgetOperation
-        {
-            Date = operationDTO.Date,
-            Type = OperationType.Expense,
-            Sum = operationDTO.Sum,
-            Item = item
-        });
-        return Ok(result);
+        return Ok(await PostOperation(operationDTO, OperationType.Expense, item));
     }
 
     [HttpPut("incomes/{id}")]
@@ -103,21 +104,14 @@ public class BudgetOperationsController : ControllerBase
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await _itemsRepository.GetByIdAsync(operationDTO.ItemId);
-
-        if (item is null || item.Type != OperationType.Income)
+        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Income);
+        if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no income with id: {operationDTO.ItemId}");
             return NotFound(ModelState);
         }
 
-        var result = await _repository.PutAsync(id, new BudgetOperation
-        {
-            Date = operationDTO.Date,
-            Type = OperationType.Income,
-            Sum = operationDTO.Sum,
-            Item = item            
-        });
+        var result = await PutOperation(id, operationDTO, OperationType.Income, item);
 
         if (result is null)
             return NotFound();
@@ -131,21 +125,14 @@ public class BudgetOperationsController : ControllerBase
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await _itemsRepository.GetByIdAsync(operationDTO.ItemId);
-
-        if (item is null || item.Type != OperationType.Expense)
+        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Expense);
+        if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no expense with id: {operationDTO.ItemId}");
             return NotFound(ModelState);
         }
 
-        var result = await _repository.PutAsync(id, new BudgetOperation
-        {
-            Date = operationDTO.Date,
-            Type = OperationType.Expense,
-            Sum = operationDTO.Sum,
-            Item = item
-        });
+        var result = await PutOperation(id, operationDTO, OperationType.Expense, item);
 
         if (result is null)
             return NotFound();
@@ -160,6 +147,73 @@ public class BudgetOperationsController : ControllerBase
         if (result == false)
             return NotFound();
 
+        _cache.RemoveOperation(id);
         return Ok();
+    }
+
+    private async Task<IEnumerable<IBudgetOperation>> GetOperations(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
+    {
+        IEnumerable<IBudgetOperation> result;
+
+        result = _cache.GetOperationsCollection(dateFrom, dateTo, type);
+        if (result is not null)
+            return result;
+
+        OperationType[] types = type switch
+        {
+            OperationType.Income => new OperationType[] { OperationType.Income },
+            OperationType.Expense => new OperationType[] { OperationType.Expense },
+            _ => Enum.GetValues<OperationType>(),
+        };
+        result = await _repository.GetAllOverTimePeriodAsync(types, dateFrom, dateTo);
+
+        _cache.SetOperationsCollection(result, dateFrom, dateTo, type);
+
+        return result;
+    }
+    private async Task<IBudgetOperation> PostOperation(BudgetOperationDTO operationDTO, OperationType type, IBudgetItem item)
+    {
+        var result = await _repository.PostAsync(new BudgetOperation
+        {
+            Date = operationDTO.Date,
+            Type = type,
+            Sum = operationDTO.Sum,
+            Item = item
+        });
+
+        _cache.SetOperation(result!);
+
+        return result!;
+    }
+    private async Task<IBudgetOperation?> PutOperation(int id, BudgetOperationDTO operationDTO, OperationType type, IBudgetItem item)
+    {
+        var result = await _repository.PutAsync(id, new BudgetOperation
+        {
+            Date = operationDTO.Date,
+            Type = type,
+            Sum = operationDTO.Sum,
+            Item = item
+        });
+        if (result is null)
+            return result;
+
+        _cache.RemoveOperation(id);
+        _cache.SetOperation(result);
+
+        return result;
+    }
+    private async Task<IBudgetItem?> TryGetBudgetItem(int id, OperationType type)
+    {
+        IBudgetItem? result;
+
+        result = _itemsCache.GetItem(id);
+        if (result is null)
+            result = await _itemsRepository.GetByIdAsync(id);
+
+        if (result is null || result.Type != type)
+            return null;
+
+        _itemsCache.SetItem(result);
+        return result;
     }
 }
