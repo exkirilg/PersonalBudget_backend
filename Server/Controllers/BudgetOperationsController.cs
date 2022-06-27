@@ -1,12 +1,4 @@
-﻿using Domain.DTO;
-using Domain.Enums;
-using Domain.Interfaces;
-using Domain.Interfaces.Cache;
-using Domain.Interfaces.DataAccess;
-using Domain.Models;
-using Microsoft.AspNetCore.Mvc;
-
-namespace Server.Controllers;
+﻿namespace Server.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -24,12 +16,13 @@ public class BudgetOperationsController : ControllerBase
     {
         _repository = repository;
         _itemsRepository = itemsRepository;
+
         _cache = cache;
         _itemsCache = itemsCache;
-
     }
 
     [HttpGet("{id}")]
+    [Authorize(Policy = AuthorizationPolicies.MustBeOperationAuthor)]
     public async Task<IActionResult> GetById(int id)
     {
         IBudgetOperation? result;

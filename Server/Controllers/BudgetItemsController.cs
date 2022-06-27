@@ -1,12 +1,4 @@
-﻿using Domain.DTO;
-using Domain.Enums;
-using Domain.Interfaces;
-using Domain.Interfaces.Cache;
-using Domain.Interfaces.DataAccess;
-using Domain.Models;
-using Microsoft.AspNetCore.Mvc;
-
-namespace Server.Controllers;
+﻿namespace Server.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]

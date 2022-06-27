@@ -7,4 +7,5 @@ public interface IBudgetOperation
     public OperationType Type { get; set; }
     public double Sum { get; set; }
     public IBudgetItem? Item { get; set; }
+    public string AuthorId { get; set; }
 }

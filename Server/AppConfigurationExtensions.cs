@@ -1,9 +1,8 @@
-﻿using DataAccess.Repositories;
-using DbUp;
-using Domain.Interfaces.Cache;
-using Domain.Interfaces.DataAccess;
-using Domain.Models.Cache;
+﻿using DbUp;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Server;
 
@@ -14,6 +13,7 @@ public static class AppConfigurationExtensions
         builder.Services.AddControllers();
         
         builder.Services.AddHttpClient();
+        builder.Services.AddHttpContextAccessor();
 
         #region Swagger/OpenAPI
 
@@ -89,15 +89,47 @@ public static class AppConfigurationExtensions
 
         #region Auth
 
+        builder.Services.AddDbContext<IdentityContext>(options =>
+            options.UseNpgsql(builder.Configuration["ConnectionStrings:PersonalBudgetIdentityConnection"]));
+        
+        builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<IdentityContext>();
+
+        builder.Services.Configure<IdentityOptions>(options =>
+        {
+            options.Password.RequiredLength = 6;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireLowercase = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequireDigit = false;
+            options.User.RequireUniqueEmail = true;
+        });
+
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
         }).AddJwtBearer(options =>
         {
-            options.Authority = builder.Configuration["Auth0:Authority"];
-            options.Audience = builder.Configuration["Auth0:Audience"];
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = builder.Configuration["Auth:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = builder.Configuration["Auth:Audience"],
+                ValidateLifetime = false,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Auth:JWTSecret"])),
+                ValidateIssuerSigningKey = true
+            };
         });
+
+        builder.Services.AddAuthorization(options =>
+            options.AddPolicy(AuthorizationPolicies.MustBeOperationAuthor, policy =>
+                policy.Requirements.Add(new MustBeOperationAuthorRequirement())
+            )
+        );
+
+        builder.Services.AddScoped<IAuthorizationHandler, MustBeOperationAuthorHandler>();
 
         #endregion
     }

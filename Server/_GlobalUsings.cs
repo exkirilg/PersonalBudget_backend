@@ -1,4 +1,16 @@
-﻿global using Microsoft.AspNetCore.Authentication;
+﻿global using DataAccess;
+global using DataAccess.Repositories;
+global using Domain.DTO;
+global using Domain.Enums;
+global using Domain.Interfaces;
+global using Domain.Interfaces.Cache;
+global using Domain.Interfaces.DataAccess;
+global using Domain.Models;
+global using Domain.Models.Cache;
+global using Microsoft.AspNetCore.Authentication;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
 global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.AspNetCore.Mvc;
 global using Server;
+global using Server.Authorization;

@@ -35,15 +35,15 @@ public static class QueriesMapping
     private static PropertyInfo MapBudgetItemProperty(Type type, string columnName)
     {
         if (budgetItemsColumnsMaps.ContainsKey(columnName))
-            return type.GetProperty(budgetItemsColumnsMaps[columnName]);
+            return type.GetProperty(budgetItemsColumnsMaps[columnName])!;
         else
-            return type.GetProperty(columnName);
+            return type.GetProperty(columnName)!;
     }
     private static PropertyInfo MapBudgetOperationProperty(Type type, string columnName)
     {
         if (budgetOperationsColumnsMaps.ContainsKey(columnName))
-            return type.GetProperty(budgetOperationsColumnsMaps[columnName]);
+            return type.GetProperty(budgetOperationsColumnsMaps[columnName])!;
         else
-            return type.GetProperty(columnName);
+            return type.GetProperty(columnName)!;
     }
 }
