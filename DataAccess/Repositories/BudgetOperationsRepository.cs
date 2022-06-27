@@ -1,109 +1,21 @@
-﻿using Dapper;
-using Microsoft.Extensions.Configuration;
-using Npgsql;
+﻿using DataAccess.Repositories.Abstract;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Repositories;
 
-public class BudgetOperationsRepository : IBudgetOperationsRepository
+public class BudgetOperationsRepository : GenericRepository<Operation>, IOperationsRepository
 {
-    private readonly string _connectionString;
+    private readonly PersonalBudgetContext _context;
 
-    public BudgetOperationsRepository(IConfiguration config)
+    public BudgetOperationsRepository(PersonalBudgetContext context) : base(context)
     {
-        _connectionString = config["ConnectionStrings:PersonalBudgetConnection"];
+        _context = context;
     }
 
-    public async Task<IBudgetOperation?> GetByIdAsync(int id)
+    public async Task<IEnumerable<Operation>> GetAllByTypesOverTimePeriodAsync(IEnumerable<OperationType> types, DateTime dateFrom, DateTime dateTo)
     {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        return (await connection.QueryAsync<BudgetOperation, BudgetItem, BudgetOperation>(
-            sql:
-                "SELECT * FROM budget_operations_getById(@Id)",
-            map:
-                (operation, item) =>
-                {
-                    operation.Item = item;
-                    return operation;
-                },
-            splitOn:
-                "item_id",
-            param:
-                new { Id = id }
-        )).FirstOrDefault();
-    }
-
-    public async Task<IEnumerable<IBudgetOperation>> GetAllOverTimePeriodAsync(IEnumerable<OperationType> types, DateTime dateFrom, DateTime dateTo)
-    {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        return await connection.QueryAsync<BudgetOperation, BudgetItem, BudgetOperation>(
-            sql:
-                "SELECT * FROM budget_operations_getAllForPeriod(@Types, @DateFrom, @DateTo)",
-            map:
-                (operation, item) =>
-                {
-                    operation.Item = item;
-                    return operation;
-                },
-            splitOn:
-                "item_id",
-            param:
-                new { Types = types.Select(t => (int)t).ToArray(), DateFrom = dateFrom, DateTo = dateTo }
-        );
-    }
-
-    public async Task<IBudgetOperation?> PostAsync(IBudgetOperation entity)
-    {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        return (await connection.QueryAsync<BudgetOperation, BudgetItem, BudgetOperation>(
-            sql:
-                "SELECT * FROM budget_operations_post(@Date, @Type, @Sum, @ItemId)",
-            map:
-                (operation, item) =>
-                {
-                    operation.Item = item;
-                    return operation;
-                },
-            splitOn:
-                "item_id",
-            param:
-                new { Date = entity.Date, Type = (int)entity.Type, Sum = entity.Sum, ItemId = entity.Item?.Id }
-        )).FirstOrDefault();
-    }
-
-    public async Task<IBudgetOperation?> PutAsync(int id, IBudgetOperation entity)
-    {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        return (await connection.QueryAsync<BudgetOperation, BudgetItem, BudgetOperation>(
-            sql:
-                "SELECT * FROM budget_operations_put(@Id, @Date, @Sum, @ItemId)",
-            map:
-                (operation, item) =>
-                {
-                    operation.Item = item;
-                    return operation;
-                },
-            splitOn:
-                "item_id",
-            param:
-                new { Id = id, Date = entity.Date, Sum = entity.Sum, ItemId = entity.Item?.Id }
-        )).FirstOrDefault();
-    }
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        return await connection.QueryFirstAsync<bool>(
-            "SELECT * FROM budget_operations_delete(@Id)",
-            new { Id = id });
+        return await _context.Operations
+            .Where(operation => types.Contains(operation.Type) && operation.Date >= dateFrom && operation.Date <= dateTo)
+            .ToListAsync();
     }
 }

@@ -2,17 +2,17 @@
 
 [Route("api/[controller]")]
 [ApiController]
-public class BudgetOperationsController : ControllerBase
+public class OperationsController : ControllerBase
 {
-    private readonly IBudgetOperationsRepository _repository;
-    private readonly IBudgetItemsRepository _itemsRepository;
+    private readonly IOperationsRepository _repository;
+    private readonly IItemsRepository _itemsRepository;
 
-    private readonly IBudgetOperationsCache _cache;
-    private readonly IBudgetItemsCache _itemsCache;
+    private readonly IOperationsCache _cache;
+    private readonly IItemsCache _itemsCache;
 
-    public BudgetOperationsController(
-        IBudgetOperationsRepository repository, IBudgetItemsRepository itemsRepository,
-        IBudgetOperationsCache cache, IBudgetItemsCache itemsCache)
+    public OperationsController(
+        IOperationsRepository repository, IItemsRepository itemsRepository,
+        IOperationsCache cache, IItemsCache itemsCache)
     {
         _repository = repository;
         _itemsRepository = itemsRepository;
@@ -25,7 +25,7 @@ public class BudgetOperationsController : ControllerBase
     [Authorize(Policy = AuthorizationPolicies.MustBeOperationAuthor)]
     public async Task<IActionResult> GetById(int id)
     {
-        IBudgetOperation? result;
+        Operation? result;
 
         result = _cache.GetOperation(id);
         if (result is not null)
@@ -60,12 +60,12 @@ public class BudgetOperationsController : ControllerBase
     }
 
     [HttpPost("incomes")]
-    public async Task<IActionResult> PostIncome([FromBody] BudgetOperationDTO operationDTO)
+    public async Task<IActionResult> PostIncome([FromBody] OperationDTO operationDTO)
     {
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Income);
+        Item? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Income);
         if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no income with id: {operationDTO.ItemId}");
@@ -76,12 +76,12 @@ public class BudgetOperationsController : ControllerBase
     }
 
     [HttpPost("expenses")]
-    public async Task<IActionResult> PostExpense([FromBody] BudgetOperationDTO operationDTO)
+    public async Task<IActionResult> PostExpense([FromBody] OperationDTO operationDTO)
     {
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Expense);
+        Item? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Expense);
         if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no expense with id: {operationDTO.ItemId}");
@@ -92,12 +92,12 @@ public class BudgetOperationsController : ControllerBase
     }
 
     [HttpPut("incomes/{id}")]
-    public async Task<IActionResult> PutIncome(int id, [FromBody] BudgetOperationDTO operationDTO)
+    public async Task<IActionResult> PutIncome(int id, [FromBody] OperationDTO operationDTO)
     {
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Income);
+        Item? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Income);
         if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no income with id: {operationDTO.ItemId}");
@@ -113,12 +113,12 @@ public class BudgetOperationsController : ControllerBase
     }
 
     [HttpPut("expenses/{id}")]
-    public async Task<IActionResult> PutExpense(int id, [FromBody] BudgetOperationDTO operationDTO)
+    public async Task<IActionResult> PutExpense(int id, [FromBody] OperationDTO operationDTO)
     {
         if (ModelState.IsValid == false)
             return BadRequest(ModelState);
 
-        IBudgetItem? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Expense);
+        Item? item = await TryGetBudgetItem(operationDTO.ItemId, OperationType.Expense);
         if (item is null)
         {
             ModelState.AddModelError(string.Empty, $"There is no expense with id: {operationDTO.ItemId}");
@@ -144,9 +144,9 @@ public class BudgetOperationsController : ControllerBase
         return Ok();
     }
 
-    private async Task<IEnumerable<IBudgetOperation>> GetOperations(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
+    private async Task<IEnumerable<Operation>> GetOperations(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
-        IEnumerable<IBudgetOperation> result;
+        IEnumerable<Operation> result;
 
         result = _cache.GetOperationsCollection(dateFrom, dateTo, type);
         if (result is not null)
@@ -158,15 +158,15 @@ public class BudgetOperationsController : ControllerBase
             OperationType.Expense => new OperationType[] { OperationType.Expense },
             _ => Enum.GetValues<OperationType>(),
         };
-        result = await _repository.GetAllOverTimePeriodAsync(types, dateFrom, dateTo);
+        result = await _repository.GetAllByTypesOverTimePeriodAsync(types, dateFrom, dateTo);
 
         _cache.SetOperationsCollection(result, dateFrom, dateTo, type);
 
         return result;
     }
-    private async Task<IBudgetOperation> PostOperation(BudgetOperationDTO operationDTO, OperationType type, IBudgetItem item)
+    private async Task<Operation> PostOperation(OperationDTO operationDTO, OperationType type, Item item)
     {
-        var result = await _repository.PostAsync(new BudgetOperation
+        var result = await _repository.PostAsync(new Operation
         {
             Date = operationDTO.Date,
             Type = type,
@@ -178,15 +178,10 @@ public class BudgetOperationsController : ControllerBase
 
         return result!;
     }
-    private async Task<IBudgetOperation?> PutOperation(int id, BudgetOperationDTO operationDTO, OperationType type, IBudgetItem item)
+    private async Task<Operation?> PutOperation(int id, OperationDTO operationDTO, OperationType type, Item item)
     {
-        var result = await _repository.PutAsync(id, new BudgetOperation
-        {
-            Date = operationDTO.Date,
-            Type = type,
-            Sum = operationDTO.Sum,
-            Item = item
-        });
+        operationDTO.Item = item;
+        var result = await _repository.PutAsync(id, operationDTO);
         if (result is null)
             return result;
 
@@ -195,9 +190,9 @@ public class BudgetOperationsController : ControllerBase
 
         return result;
     }
-    private async Task<IBudgetItem?> TryGetBudgetItem(int id, OperationType type)
+    private async Task<Item?> TryGetBudgetItem(int id, OperationType type)
     {
-        IBudgetItem? result;
+        Item? result;
 
         result = _itemsCache.GetItem(id);
         if (result is null)

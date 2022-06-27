@@ -3,10 +3,10 @@
 public class MustBeOperationAuthorHandler: AuthorizationHandler<MustBeOperationAuthorRequirement>
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IBudgetOperationsRepository _repository;
+    private readonly IOperationsRepository _repository;
     private readonly UserManager<IdentityUser> _userManager;
 
-    public MustBeOperationAuthorHandler(IHttpContextAccessor httpContextAccessor, IBudgetOperationsRepository repository, UserManager<IdentityUser> userManager)
+    public MustBeOperationAuthorHandler(IHttpContextAccessor httpContextAccessor, IOperationsRepository repository, UserManager<IdentityUser> userManager)
     {
         _httpContextAccessor = httpContextAccessor;
         _repository = repository;

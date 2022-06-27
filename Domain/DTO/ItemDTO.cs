@@ -2,7 +2,7 @@
 
 namespace Domain.DTO;
 
-public class BudgetItemDTO
+public class ItemDTO : IDTO
 {
     [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required")]
     [MaxLength(100)]

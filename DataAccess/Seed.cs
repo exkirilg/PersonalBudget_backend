@@ -3,24 +3,34 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess;
 
-public class IdentityContextSeed
+public class Seed
 {
-    private readonly IdentityContext _context;
+    private readonly IdentityContext _identityContext;
+    private readonly PersonalBudgetContext _personalBudgetContext;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly UserManager<IdentityUser> _userManager;
 
-    public IdentityContextSeed(IdentityContext context, RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager)
+    public Seed(
+        IdentityContext identityContext, PersonalBudgetContext personalBudgetContext,
+        RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager)
     {
-        _context = context;
+        _identityContext = identityContext;
+        _personalBudgetContext = personalBudgetContext;
         _roleManager = roleManager;
         _userManager = userManager;
     }
 
-    public async Task EnsurePopulatedAsync()
+    public async Task EnsureDatabaseMigrations()
     {
-        if ((await _context.Database.GetPendingMigrationsAsync()).Any())
-            await _context.Database.MigrateAsync();
+        if ((await _identityContext.Database.GetPendingMigrationsAsync()).Any())
+            await _identityContext.Database.MigrateAsync();
 
+        if ((await _personalBudgetContext.Database.GetPendingMigrationsAsync()).Any())
+            await _personalBudgetContext.Database.MigrateAsync();
+    }
+
+    public async Task EnsureIdentityDbPopulatedAsync()
+    {
         if (await _roleManager.Roles.AnyAsync() == false)
             await PopulateRoles();
 

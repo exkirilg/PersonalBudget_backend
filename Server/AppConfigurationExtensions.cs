@@ -1,5 +1,4 @@
-﻿using DbUp;
-using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -17,7 +16,6 @@ public static class AppConfigurationExtensions
 
         #region Swagger/OpenAPI
 
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
@@ -42,7 +40,7 @@ public static class AppConfigurationExtensions
                             Id = "Bearer"
                         }
                     },
-                    new string[] {}
+                    Array.Empty<string>()
                 }
             });
         });
@@ -51,31 +49,19 @@ public static class AppConfigurationExtensions
 
         #region Data access
 
-        var connectionString = builder.Configuration["ConnectionStrings:PersonalBudgetConnection"];
-        EnsureDatabase.For.PostgresqlDatabase(connectionString);
+        builder.Services.AddDbContext<PersonalBudgetContext>(options =>
+            options.UseNpgsql(builder.Configuration["ConnectionStrings:PersonalBudgetConnection"]));
 
-        var upgrader = DeployChanges.To
-            .PostgresqlDatabase(connectionString, null)
-            .WithScriptsEmbeddedInAssembly(
-                System.Reflection.Assembly.GetExecutingAssembly(),
-                (string scripts) => scripts.StartsWith("Server.PostgreSQLScripts")
-            )
-            .WithTransaction()
-            .Build();
-
-        if (upgrader.IsUpgradeRequired())
-            upgrader.PerformUpgrade();
-
-        builder.Services.AddScoped<IBudgetItemsRepository, BudgetItemsRepository>();
-        builder.Services.AddScoped<IBudgetOperationsRepository, BudgetOperationsRepository>();
+        builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
+        builder.Services.AddScoped<IOperationsRepository, BudgetOperationsRepository>();
 
         #endregion
 
         #region Cache
 
         builder.Services.AddMemoryCache();
-        builder.Services.AddSingleton<IBudgetItemsCache, BudgetItemsCache>();
-        builder.Services.AddSingleton<IBudgetOperationsCache, BudgetOperationsCache>();
+        builder.Services.AddSingleton<IItemsCache, ItemsCache>();
+        builder.Services.AddSingleton<IOperationsCache, OperationsCache>();
 
         #endregion
 

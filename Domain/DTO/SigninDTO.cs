@@ -2,7 +2,7 @@
 
 namespace Domain.DTO;
 
-public class SigninDTO
+public class SigninDTO : IDTO
 {
     [Required(AllowEmptyStrings = false, ErrorMessage = "Email is required")]
     [EmailAddress]

@@ -3,13 +3,13 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Domain.Models.Cache;
 
-public class BudgetOperationsCache: IBudgetOperationsCache
+public class OperationsCache: IOperationsCache
 {
     const long CacheSizeLimit = 100;
 
     private readonly MemoryCache _cache;
 
-    public BudgetOperationsCache()
+    public OperationsCache()
     {
         _cache = new MemoryCache(new MemoryCacheOptions
         {
@@ -17,12 +17,12 @@ public class BudgetOperationsCache: IBudgetOperationsCache
         });
     }
 
-    public IEnumerable<IBudgetOperation> GetOperationsCollection(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
+    public IEnumerable<Operation> GetOperationsCollection(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
-        _cache.TryGetValue(GetOperationsCollectionCacheKey(dateFrom, dateTo, type), out IEnumerable<IBudgetOperation> operations);
+        _cache.TryGetValue(GetOperationsCollectionCacheKey(dateFrom, dateTo, type), out IEnumerable<Operation> operations);
         return operations;
     }
-    public void SetOperationsCollection(IEnumerable<IBudgetOperation> operations, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
+    public void SetOperationsCollection(IEnumerable<Operation> operations, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
         var cacheEntryOptions = new MemoryCacheEntryOptions()
             .SetAbsoluteExpiration(new TimeSpan(hours: 0, minutes: 0, seconds: 1))
@@ -30,12 +30,12 @@ public class BudgetOperationsCache: IBudgetOperationsCache
         _cache.Set(GetOperationsCollectionCacheKey(dateFrom, dateTo, type), operations, cacheEntryOptions);
     }
 
-    public IBudgetOperation GetOperation(int id)
+    public Operation GetOperation(int id)
     {
-        _cache.TryGetValue(GetOperationCacheKey(id), out IBudgetOperation operation);
+        _cache.TryGetValue(GetOperationCacheKey(id), out Operation operation);
         return operation;
     }
-    public void SetOperation(IBudgetOperation operation)
+    public void SetOperation(Operation operation)
     {
         var cacheEntryOptions = new MemoryCacheEntryOptions().SetSize(1);
         _cache.Set(GetOperationCacheKey(operation.Id), operation, cacheEntryOptions);

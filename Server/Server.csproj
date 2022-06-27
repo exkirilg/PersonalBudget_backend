@@ -8,19 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="PostgreSQLScripts\01-tables.sql" />
-    <None Remove="PostgreSQLScripts\02-functions_budget_items.sql" />
-    <None Remove="PostgreSQLScripts\03-functions_budget_operations.sql" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="PostgreSQLScripts\03-functions_budget_operations.sql" />
-    <EmbeddedResource Include="PostgreSQLScripts\02-functions_budget_items.sql" />
-    <EmbeddedResource Include="PostgreSQLScripts\01-tables.sql" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="dbup-postgresql" Version="4.6.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.6">

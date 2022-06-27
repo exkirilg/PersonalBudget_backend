@@ -2,12 +2,12 @@
 
 [Route("api/[controller]")]
 [ApiController]
-public class BudgetItemsController : ControllerBase
+public class ItemsController : ControllerBase
 {
-    private readonly IBudgetItemsRepository _repository;
-    private readonly IBudgetItemsCache _cache;
+    private readonly IItemsRepository _repository;
+    private readonly IItemsCache _cache;
 
-    public BudgetItemsController(IBudgetItemsRepository repository, IBudgetItemsCache cache)
+    public ItemsController(IItemsRepository repository, IItemsCache cache)
     {
         _repository = repository;
         _cache = cache;
@@ -16,7 +16,7 @@ public class BudgetItemsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        IBudgetItem? result;
+        Item? result;
 
         result = _cache.GetItem(id);
 
@@ -52,7 +52,7 @@ public class BudgetItemsController : ControllerBase
     }
 
     [HttpPost("incomes")]
-    public async Task<IActionResult> PostIncome([FromBody] BudgetItemDTO itemDTO)
+    public async Task<IActionResult> PostIncome([FromBody] ItemDTO itemDTO)
     {
         if (ModelState.IsValid == false)
         {
@@ -68,7 +68,7 @@ public class BudgetItemsController : ControllerBase
     }
 
     [HttpPost("expenses")]
-    public async Task<IActionResult> PostExpense([FromBody] BudgetItemDTO itemDTO)
+    public async Task<IActionResult> PostExpense([FromBody] ItemDTO itemDTO)
     {
         if (ModelState.IsValid == false)
         {
@@ -84,7 +84,7 @@ public class BudgetItemsController : ControllerBase
     }
 
     [HttpPut("incomes/{id}")]
-    public async Task<IActionResult> PutIncome(int id, [FromBody] BudgetItemDTO itemDTO)
+    public async Task<IActionResult> PutIncome(int id, [FromBody] ItemDTO itemDTO)
     {
         if (ModelState.IsValid == false)
         {
@@ -105,7 +105,7 @@ public class BudgetItemsController : ControllerBase
     }
 
     [HttpPut("expenses/{id}")]
-    public async Task<IActionResult> PutExpense(int id, [FromBody] BudgetItemDTO itemDTO)
+    public async Task<IActionResult> PutExpense(int id, [FromBody] ItemDTO itemDTO)
     {
         if (ModelState.IsValid == false)
         {
@@ -140,9 +140,9 @@ public class BudgetItemsController : ControllerBase
         return Ok();
     }
 
-    private async Task<IEnumerable<IBudgetItem>> GetItems(OperationType? type = null)
+    private async Task<IEnumerable<Item>> GetItems(OperationType? type = null)
     {
-        IEnumerable<IBudgetItem> result;
+        IEnumerable<Item> result;
 
         result = _cache.GetItemsCollection();
         if (result is not null)
@@ -154,15 +154,15 @@ public class BudgetItemsController : ControllerBase
             OperationType.Expense => new OperationType[] { OperationType.Expense },
             _ => Enum.GetValues<OperationType>(),
         };
-        result = await _repository.GetAllAsync(types);
+        result = await _repository.GetAllByTypesAsync(types);
 
         _cache.SetItemsCollection(result, type);
 
         return result;
     }
-    private async Task<IBudgetItem> PostItem(BudgetItemDTO itemDTO, OperationType type)
+    private async Task<Item> PostItem(ItemDTO itemDTO, OperationType type)
     {
-        var result = await _repository.PostAsync(new BudgetItem { Name = itemDTO.Name, Type = type });
+        var result = await _repository.PostAsync(new Item { Name = itemDTO.Name, Type = type });
 
         _cache.RemoveItemsCollection();
         _cache.RemoveItemsCollection(type);
@@ -170,9 +170,9 @@ public class BudgetItemsController : ControllerBase
 
         return result!;
     }
-    private async Task<IBudgetItem?> PutItem(int id, BudgetItemDTO itemDTO, OperationType type)
+    private async Task<Item?> PutItem(int id, ItemDTO itemDTO, OperationType type)
     {
-        var result = await _repository.PutAsync(id, new BudgetItem { Name = itemDTO.Name, Type = type });
+        var result = await _repository.PutAsync(id, itemDTO);
         if (result is null)
             return result;
 

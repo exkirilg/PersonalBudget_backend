@@ -6,13 +6,13 @@ app.ConfigureWebApplication();
 
 using (var scope = app.Services.CreateScope())
 {
-    var contextSeed = new IdentityContextSeed(
+    var seed = new Seed(
         scope.ServiceProvider.GetRequiredService<IdentityContext>(),
+        scope.ServiceProvider.GetRequiredService<PersonalBudgetContext>(),
         scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(),
         scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>());
-    await contextSeed.EnsurePopulatedAsync();
+    await seed.EnsureDatabaseMigrations();
+    await seed.EnsureIdentityDbPopulatedAsync();
 }
-
-QueriesMapping.ConfigureQueriesMapping();
 
 app.Run();
