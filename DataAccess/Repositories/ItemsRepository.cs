@@ -17,7 +17,7 @@ public class ItemsRepository : GenericRepository<Item>, IItemsRepository
         var equal = await _context.Items
             .Where(item => item.Id != id && item.Type == type && item.Name == name)
             .FirstOrDefaultAsync();
-        return equal is null;
+        return equal is not null;
     }
 
     public async Task<IEnumerable<Item>> GetAllByTypesAsync(IEnumerable<OperationType> types)

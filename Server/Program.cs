@@ -11,8 +11,9 @@ using (var scope = app.Services.CreateScope())
         scope.ServiceProvider.GetRequiredService<PersonalBudgetContext>(),
         scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(),
         scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>());
-    await seed.EnsureDatabaseMigrations();
+    await seed.EnsureDatabaseMigrationsAsync();
     await seed.EnsureIdentityDbPopulatedAsync();
+    await seed.EnsureItemsPopulatedAsync();
 }
 
 app.Run();

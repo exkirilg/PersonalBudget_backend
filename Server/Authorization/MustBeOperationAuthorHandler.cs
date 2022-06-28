@@ -34,7 +34,7 @@ public class MustBeOperationAuthorHandler: AuthorizationHandler<MustBeOperationA
         var user = await _userManager.GetUserAsync(context.User);
         var userRoles = await _userManager.GetRolesAsync(user);
 
-        if (userRoles.Contains("Admin") == false && operation.AuthorId != user.Id)
+        if (userRoles.Contains(AuthorizationRoles.Admin) == false && operation.AuthorId != user.Id)
         {
             context.Fail();
             return;

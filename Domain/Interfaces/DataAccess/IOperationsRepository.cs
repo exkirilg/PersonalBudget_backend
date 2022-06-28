@@ -2,5 +2,6 @@
 
 public interface IOperationsRepository : IGenericRepository<Operation>
 {
-    public Task<IEnumerable<Operation>> GetAllByTypesOverTimePeriodAsync(IEnumerable<OperationType> types, DateTime dateFrom, DateTime dateTo);
+    public Task<IEnumerable<Operation>> GetAllByTypesOverTimePeriodAsync(
+        string userId, bool userIsAdmin, IEnumerable<OperationType> types, DateTime dateFrom, DateTime dateTo);
 }

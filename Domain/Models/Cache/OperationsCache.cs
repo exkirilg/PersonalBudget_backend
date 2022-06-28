@@ -17,17 +17,17 @@ public class OperationsCache: IOperationsCache
         });
     }
 
-    public IEnumerable<Operation> GetOperationsCollection(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
+    public IEnumerable<Operation> GetOperationsCollection(string userId, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
-        _cache.TryGetValue(GetOperationsCollectionCacheKey(dateFrom, dateTo, type), out IEnumerable<Operation> operations);
+        _cache.TryGetValue(GetOperationsCollectionCacheKey(userId, dateFrom, dateTo, type), out IEnumerable<Operation> operations);
         return operations;
     }
-    public void SetOperationsCollection(IEnumerable<Operation> operations, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
+    public void SetOperationsCollection(string userId, IEnumerable<Operation> operations, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
         var cacheEntryOptions = new MemoryCacheEntryOptions()
             .SetAbsoluteExpiration(new TimeSpan(hours: 0, minutes: 0, seconds: 1))
             .SetSize(operations.Count());
-        _cache.Set(GetOperationsCollectionCacheKey(dateFrom, dateTo, type), operations, cacheEntryOptions);
+        _cache.Set(GetOperationsCollectionCacheKey(userId, dateFrom, dateTo, type), operations, cacheEntryOptions);
     }
 
     public Operation GetOperation(int id)
@@ -46,6 +46,6 @@ public class OperationsCache: IOperationsCache
     }
 
     private string GetOperationCacheKey(int id) => $"Operation-{id}";
-    private string GetOperationsCollectionCacheKey(DateTime dateFrom, DateTime dateTo, OperationType? type) => type is null ?
-        $"Operations-{dateFrom}-{dateTo}" : $"Operations-{type}-{dateFrom}-{dateTo}";
+    private string GetOperationsCollectionCacheKey(string userId, DateTime dateFrom, DateTime dateTo, OperationType? type) => type is null ?
+        $"{userId}-Operations-{dateFrom}-{dateTo}" : $"{userId}-Operations-{type}-{dateFrom}-{dateTo}";
 }

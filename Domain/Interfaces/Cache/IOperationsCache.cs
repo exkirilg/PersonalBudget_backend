@@ -2,8 +2,8 @@
 
 public interface IOperationsCache
 {
-    IEnumerable<Operation> GetOperationsCollection(DateTime dateFrom, DateTime dateTo, OperationType? type = null);
-    void SetOperationsCollection(IEnumerable<Operation> operations, DateTime dateFrom, DateTime dateTo, OperationType? type = null);
+    IEnumerable<Operation> GetOperationsCollection(string userId, DateTime dateFrom, DateTime dateTo, OperationType? type = null);
+    void SetOperationsCollection(string userId, IEnumerable<Operation> operations, DateTime dateFrom, DateTime dateTo, OperationType? type = null);
 
     Operation GetOperation(int id);
     void SetOperation(Operation operation);

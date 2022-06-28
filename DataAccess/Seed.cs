@@ -20,7 +20,7 @@ public class Seed
         _userManager = userManager;
     }
 
-    public async Task EnsureDatabaseMigrations()
+    public async Task EnsureDatabaseMigrationsAsync()
     {
         if ((await _identityContext.Database.GetPendingMigrationsAsync()).Any())
             await _identityContext.Database.MigrateAsync();
@@ -32,13 +32,22 @@ public class Seed
     public async Task EnsureIdentityDbPopulatedAsync()
     {
         if (await _roleManager.Roles.AnyAsync() == false)
-            await PopulateRoles();
+            await PopulateRolesAsync();
 
         if (await _userManager.Users.AnyAsync() == false)
-            await PopulateUsers();
+            await PopulateUsersAsync();
     }
 
-    private async Task PopulateRoles()
+    public async Task EnsureItemsPopulatedAsync()
+    {
+        if (await _personalBudgetContext.Items.AnyAsync() == false)
+        {
+            await PopulateIncomeItemsAsync();
+            await PopulateExpenseItemsAsync();
+        }
+    }
+
+    private async Task PopulateRolesAsync()
     {
         var roles = new List<IdentityRole>
         {
@@ -50,11 +59,38 @@ public class Seed
             await _roleManager.CreateAsync(role);
     }
 
-    private async Task PopulateUsers()
+    private async Task PopulateUsersAsync()
     {
         var admin = new IdentityUser { UserName = "admin", Email = "admin@admin.com" };
         await _userManager.CreateAsync(admin, "123456");
         await _userManager.AddToRoleAsync(admin, "admin");
         await _userManager.AddToRoleAsync(admin, "user");
+    }
+
+    private async Task PopulateIncomeItemsAsync()
+    {
+        var items = new Item[]
+        {
+            new Item { Name = "Salary", Type = OperationType.Income },
+            new Item { Name = "Side Hustle", Type = OperationType.Income }
+        };
+
+        await _personalBudgetContext.Items.AddRangeAsync(items);
+        await _personalBudgetContext.SaveChangesAsync();
+    }
+
+    private async Task PopulateExpenseItemsAsync()
+    {
+        var items = new Item[]
+        {
+            new Item { Name = "Rent", Type = OperationType.Expense },
+            new Item { Name = "Groceries", Type = OperationType.Expense },
+            new Item { Name = "Utility Bills", Type = OperationType.Expense },
+            new Item { Name = "Entertaiments", Type = OperationType.Expense },
+            new Item { Name = "Misc", Type = OperationType.Expense }
+        };
+
+        await _personalBudgetContext.Items.AddRangeAsync(items);
+        await _personalBudgetContext.SaveChangesAsync();
     }
 }

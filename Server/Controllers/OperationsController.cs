@@ -2,6 +2,7 @@
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class OperationsController : ControllerBase
 {
     private readonly IOperationsRepository _repository;
@@ -10,15 +11,19 @@ public class OperationsController : ControllerBase
     private readonly IOperationsCache _cache;
     private readonly IItemsCache _itemsCache;
 
+    private readonly UserManager<IdentityUser> _userManager;
+
     public OperationsController(
         IOperationsRepository repository, IItemsRepository itemsRepository,
-        IOperationsCache cache, IItemsCache itemsCache)
+        IOperationsCache cache, IItemsCache itemsCache, UserManager<IdentityUser> userManager)
     {
         _repository = repository;
         _itemsRepository = itemsRepository;
 
         _cache = cache;
         _itemsCache = itemsCache;
+
+        _userManager = userManager;
     }
 
     [HttpGet("{id}")]
@@ -92,6 +97,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPut("incomes/{id}")]
+    [Authorize(Policy = AuthorizationPolicies.MustBeOperationAuthor)]
     public async Task<IActionResult> PutIncome(int id, [FromBody] OperationDTO operationDTO)
     {
         if (ModelState.IsValid == false)
@@ -104,7 +110,7 @@ public class OperationsController : ControllerBase
             return NotFound(ModelState);
         }
 
-        var result = await PutOperation(id, operationDTO, OperationType.Income, item);
+        var result = await PutOperation(id, operationDTO, item);
 
         if (result is null)
             return NotFound();
@@ -113,6 +119,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpPut("expenses/{id}")]
+    [Authorize(Policy = AuthorizationPolicies.MustBeOperationAuthor)]
     public async Task<IActionResult> PutExpense(int id, [FromBody] OperationDTO operationDTO)
     {
         if (ModelState.IsValid == false)
@@ -125,7 +132,7 @@ public class OperationsController : ControllerBase
             return NotFound(ModelState);
         }
 
-        var result = await PutOperation(id, operationDTO, OperationType.Expense, item);
+        var result = await PutOperation(id, operationDTO, item);
 
         if (result is null)
             return NotFound();
@@ -134,6 +141,7 @@ public class OperationsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = AuthorizationPolicies.MustBeOperationAuthor)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _repository.DeleteAsync(id);
@@ -146,9 +154,13 @@ public class OperationsController : ControllerBase
 
     private async Task<IEnumerable<Operation>> GetOperations(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
+        var user = await _userManager.GetUserAsync(User);
+        var userId = user.Id;
+        var isAdmin = await _userManager.IsInRoleAsync(user, AuthorizationRoles.Admin);
+        
         IEnumerable<Operation> result;
 
-        result = _cache.GetOperationsCollection(dateFrom, dateTo, type);
+        result = _cache.GetOperationsCollection(userId, dateFrom, dateTo, type);
         if (result is not null)
             return result;
 
@@ -158,9 +170,9 @@ public class OperationsController : ControllerBase
             OperationType.Expense => new OperationType[] { OperationType.Expense },
             _ => Enum.GetValues<OperationType>(),
         };
-        result = await _repository.GetAllByTypesOverTimePeriodAsync(types, dateFrom, dateTo);
+        result = await _repository.GetAllByTypesOverTimePeriodAsync(userId, isAdmin, types, dateFrom, dateTo);
 
-        _cache.SetOperationsCollection(result, dateFrom, dateTo, type);
+        _cache.SetOperationsCollection(userId, result, dateFrom, dateTo, type);
 
         return result;
     }
@@ -171,14 +183,15 @@ public class OperationsController : ControllerBase
             Date = operationDTO.Date,
             Type = type,
             Sum = operationDTO.Sum,
-            Item = item
+            Item = item,
+            AuthorId = _userManager.GetUserId(User)
         });
 
         _cache.SetOperation(result!);
 
         return result!;
     }
-    private async Task<Operation?> PutOperation(int id, OperationDTO operationDTO, OperationType type, Item item)
+    private async Task<Operation?> PutOperation(int id, OperationDTO operationDTO, Item item)
     {
         operationDTO.Item = item;
         var result = await _repository.PutAsync(id, operationDTO);

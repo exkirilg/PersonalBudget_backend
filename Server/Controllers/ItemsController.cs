@@ -2,6 +2,7 @@
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class ItemsController : ControllerBase
 {
     private readonly IItemsRepository _repository;
@@ -84,6 +85,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpPut("incomes/{id}")]
+    [Authorize(Roles = AuthorizationRoles.Admin)]
     public async Task<IActionResult> PutIncome(int id, [FromBody] ItemDTO itemDTO)
     {
         if (ModelState.IsValid == false)
@@ -105,6 +107,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpPut("expenses/{id}")]
+    [Authorize(Roles = AuthorizationRoles.Admin)]
     public async Task<IActionResult> PutExpense(int id, [FromBody] ItemDTO itemDTO)
     {
         if (ModelState.IsValid == false)
@@ -126,6 +129,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AuthorizationRoles.Admin)]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _repository.DeleteAsync(id);
@@ -144,7 +148,7 @@ public class ItemsController : ControllerBase
     {
         IEnumerable<Item> result;
 
-        result = _cache.GetItemsCollection();
+        result = _cache.GetItemsCollection(type);
         if (result is not null)
             return result;
         
@@ -178,7 +182,7 @@ public class ItemsController : ControllerBase
 
         _cache.RemoveItem(id);
         _cache.RemoveItemsCollection();
-        _cache.RemoveItemsCollection(OperationType.Expense);
+        _cache.RemoveItemsCollection(type);
         _cache.SetItem(result);
 
         return result;

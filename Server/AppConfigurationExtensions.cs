@@ -53,7 +53,7 @@ public static class AppConfigurationExtensions
             options.UseNpgsql(builder.Configuration["ConnectionStrings:PersonalBudgetConnection"]));
 
         builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
-        builder.Services.AddScoped<IOperationsRepository, BudgetOperationsRepository>();
+        builder.Services.AddScoped<IOperationsRepository, OperationsRepository>();
 
         #endregion
 

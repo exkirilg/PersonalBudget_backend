@@ -19,6 +19,7 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
     public async Task<T> PostAsync(T entity)
     {
         var result = await _context.Set<T>().AddAsync(entity);
+        await _context.SaveChangesAsync();
         return result.Entity;
     }
 
@@ -31,6 +32,9 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
 
         var entry = _context.Entry(entity);
         entry.CurrentValues.SetValues(dto);
+        
+        await _context.SaveChangesAsync();
+
         return entry.Entity;
     }
 
@@ -43,6 +47,8 @@ public abstract class GenericRepository<T> : IGenericRepository<T> where T : cla
 
         var entry = _context.Entry(entity);
         entry.State = EntityState.Deleted;
+
+        await _context.SaveChangesAsync();
 
         return true;
     }
