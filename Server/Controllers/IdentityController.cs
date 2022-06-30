@@ -32,15 +32,19 @@ public class IdentityController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var user = new IdentityUser { UserName = signupDTO.Email, Email = signupDTO.Email };
+        var user = new IdentityUser { UserName = signupDTO.Email.Split('@')[0], Email = signupDTO.Email };
         await _userManager.CreateAsync(user, signupDTO.Password);
         await _userManager.AddToRoleAsync(user, "User");
 
+        var claims = await GetUserClaims(user);
+        var expirationDate = DateTime.UtcNow.AddMonths(1);
         return Ok(
             new
             {
-                Token = GetAccessToken(await GetUserClaims(user)),
-                UserName = user.UserName
+                Token = GetAccessToken(claims, expirationDate),
+                ExpirationDate = expirationDate,
+                UserName = user.UserName,
+                IsAdmin = claims.Where(claim => claim.Type == ClaimTypes.Role && claim.Value == "Admin").Any()
             });
     }
 
@@ -55,11 +59,15 @@ public class IdentityController : ControllerBase
             return BadRequest(ModelState);
         }
 
+        var claims = await GetUserClaims(user);
+        var expirationDate = DateTime.UtcNow.AddMonths(1);
         return Ok(
             new
             { 
-                Token = GetAccessToken(await GetUserClaims(user)),
-                UserName = user.UserName
+                Token = GetAccessToken(claims, expirationDate),
+                ExpirationDate = expirationDate,
+                UserName = user.UserName,
+                IsAdmin = claims.Where(claim => claim.Type == ClaimTypes.Role && claim.Value == "Admin").Any()
             });
     }
 
@@ -82,7 +90,7 @@ public class IdentityController : ControllerBase
 
         return claims;
     }
-    private string GetAccessToken(IEnumerable<Claim> claims)
+    private string GetAccessToken(IEnumerable<Claim> claims, DateTime expirationDate)
     {
         var handler = new JwtSecurityTokenHandler();
         
@@ -93,7 +101,7 @@ public class IdentityController : ControllerBase
         {
             Issuer = _config["Auth:Issuer"],
             Audience = _config["Auth:Audience"],
-            Expires = DateTime.UtcNow.AddMonths(1),
+            Expires = expirationDate,
             Subject = new ClaimsIdentity(claims),
             SigningCredentials = signingCredentials
         };

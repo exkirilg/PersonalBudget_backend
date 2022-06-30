@@ -9,19 +9,17 @@ public class OperationsController : ControllerBase
     private readonly IItemsRepository _itemsRepository;
 
     private readonly IOperationsCache _cache;
-    private readonly IItemsCache _itemsCache;
 
     private readonly UserManager<IdentityUser> _userManager;
 
     public OperationsController(
         IOperationsRepository repository, IItemsRepository itemsRepository,
-        IOperationsCache cache, IItemsCache itemsCache, UserManager<IdentityUser> userManager)
+        IOperationsCache cache, UserManager<IdentityUser> userManager)
     {
         _repository = repository;
         _itemsRepository = itemsRepository;
 
         _cache = cache;
-        _itemsCache = itemsCache;
 
         _userManager = userManager;
     }
@@ -205,16 +203,11 @@ public class OperationsController : ControllerBase
     }
     private async Task<Item?> TryGetBudgetItem(int id, OperationType type)
     {
-        Item? result;
-
-        result = _itemsCache.GetItem(id);
-        if (result is null)
-            result = await _itemsRepository.GetByIdAsync(id);
+        var result = await _itemsRepository.GetByIdAsync(id);
 
         if (result is null || result.Type != type)
             return null;
 
-        _itemsCache.SetItem(result);
         return result;
     }
 }

@@ -8,7 +8,7 @@ public class OperationDTO : IDTO
     [Required(ErrorMessage = "Date is required")]
     public DateTime Date { get; set; }
 
-    [Required(ErrorMessage = "Budget item id is required")]
+    [Required(ErrorMessage = "Item id is required")]
     public int ItemId { get; set; }
 
     [JsonIgnore]
