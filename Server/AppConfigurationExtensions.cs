@@ -117,7 +117,7 @@ public static class AppConfigurationExtensions
 
         builder.Services.AddScoped<IAuthorizationHandler, MustBeOperationAuthorHandler>();
 
-        builder.Services.AddScoped<AuthorizationServices>();
+        builder.Services.AddScoped<IAuthorizationServices, AuthorizationServices>();
 
         #endregion
     }

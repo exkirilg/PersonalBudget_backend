@@ -10,11 +10,11 @@ public class OperationsController : ControllerBase
 
     private readonly IOperationsCache _cache;
 
-    private readonly AuthorizationServices _authorizationServices;
+    private readonly IAuthorizationServices _authorizationServices;
 
     public OperationsController(
         IOperationsRepository repository, IItemsRepository itemsRepository,
-        IOperationsCache cache, AuthorizationServices authorizationServices)
+        IOperationsCache cache, IAuthorizationServices authorizationServices)
     {
         _repository = repository;
         _itemsRepository = itemsRepository;

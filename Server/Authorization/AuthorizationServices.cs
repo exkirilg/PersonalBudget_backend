@@ -2,7 +2,7 @@
 
 namespace Server.Authorization;
 
-public class AuthorizationServices
+public class AuthorizationServices: IAuthorizationServices
 {
     private readonly UserManager<IdentityUser> _userManager;
     public AuthorizationServices(UserManager<IdentityUser> userManager)
