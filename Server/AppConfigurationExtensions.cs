@@ -117,6 +117,8 @@ public static class AppConfigurationExtensions
 
         builder.Services.AddScoped<IAuthorizationHandler, MustBeOperationAuthorHandler>();
 
+        builder.Services.AddScoped<AuthorizationServices>();
+
         #endregion
     }
     public static void ConfigureWebApplication(this WebApplication app)

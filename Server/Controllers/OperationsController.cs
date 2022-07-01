@@ -10,18 +10,18 @@ public class OperationsController : ControllerBase
 
     private readonly IOperationsCache _cache;
 
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly AuthorizationServices _authorizationServices;
 
     public OperationsController(
         IOperationsRepository repository, IItemsRepository itemsRepository,
-        IOperationsCache cache, UserManager<IdentityUser> userManager)
+        IOperationsCache cache, AuthorizationServices authorizationServices)
     {
         _repository = repository;
         _itemsRepository = itemsRepository;
 
         _cache = cache;
 
-        _userManager = userManager;
+        _authorizationServices = authorizationServices;
     }
 
     [HttpGet("{id}")]
@@ -152,13 +152,12 @@ public class OperationsController : ControllerBase
 
     private async Task<IEnumerable<Operation>> GetOperations(DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
-        var user = await _userManager.GetUserAsync(User);
-        var userId = user.Id;
-        var isAdmin = await _userManager.IsInRoleAsync(user, AuthorizationRoles.Admin);
+        var userId = await _authorizationServices.GetUserIdAsync(User);
+        var isAdmin = await _authorizationServices.IsInRoleAsync(User, AuthorizationRoles.Admin);
         
         IEnumerable<Operation>? result;
 
-        result = _cache.GetOperationsCollection(userId, dateFrom, dateTo, type);
+        result = _cache.GetOperationsCollection(userId!, dateFrom, dateTo, type);
         if (result is not null)
             return result;
 
@@ -168,21 +167,22 @@ public class OperationsController : ControllerBase
             OperationType.Expense => new OperationType[] { OperationType.Expense },
             _ => Enum.GetValues<OperationType>(),
         };
-        result = await _repository.GetAllByTypesOverTimePeriodAsync(userId, isAdmin, types, dateFrom, dateTo);
+        result = await _repository.GetAllByTypesOverTimePeriodAsync(userId!, isAdmin, types, dateFrom, dateTo);
 
-        _cache.SetOperationsCollection(userId, result, dateFrom, dateTo, type);
+        _cache.SetOperationsCollection(userId!, result, dateFrom, dateTo, type);
 
         return result;
     }
     private async Task<Operation> PostOperation(OperationDTO operationDTO, OperationType type, Item item)
     {
+        var userId = await _authorizationServices.GetUserIdAsync(User);
         var result = await _repository.PostAsync(new Operation
         {
             Date = operationDTO.Date,
             Type = type,
             Sum = operationDTO.Sum,
             Item = item,
-            AuthorId = _userManager.GetUserId(User)
+            AuthorId = userId!
         });
 
         _cache.SetOperation(result!);
