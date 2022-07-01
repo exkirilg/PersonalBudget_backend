@@ -156,7 +156,7 @@ public class OperationsController : ControllerBase
         var userId = user.Id;
         var isAdmin = await _userManager.IsInRoleAsync(user, AuthorizationRoles.Admin);
         
-        IEnumerable<Operation> result;
+        IEnumerable<Operation>? result;
 
         result = _cache.GetOperationsCollection(userId, dateFrom, dateTo, type);
         if (result is not null)

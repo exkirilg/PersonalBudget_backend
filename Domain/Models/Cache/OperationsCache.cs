@@ -17,9 +17,9 @@ public class OperationsCache: IOperationsCache
         });
     }
 
-    public IEnumerable<Operation> GetOperationsCollection(string userId, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
+    public IEnumerable<Operation>? GetOperationsCollection(string userId, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
     {
-        _cache.TryGetValue(GetOperationsCollectionCacheKey(userId, dateFrom, dateTo, type), out IEnumerable<Operation> operations);
+        _cache.TryGetValue(GetOperationsCollectionCacheKey(userId, dateFrom, dateTo, type), out IEnumerable<Operation>? operations);
         return operations;
     }
     public void SetOperationsCollection(string userId, IEnumerable<Operation> operations, DateTime dateFrom, DateTime dateTo, OperationType? type = null)
@@ -30,9 +30,9 @@ public class OperationsCache: IOperationsCache
         _cache.Set(GetOperationsCollectionCacheKey(userId, dateFrom, dateTo, type), operations, cacheEntryOptions);
     }
 
-    public Operation GetOperation(int id)
+    public Operation? GetOperation(int id)
     {
-        _cache.TryGetValue(GetOperationCacheKey(id), out Operation operation);
+        _cache.TryGetValue(GetOperationCacheKey(id), out Operation? operation);
         return operation;
     }
     public void SetOperation(Operation operation)

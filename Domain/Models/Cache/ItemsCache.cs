@@ -17,9 +17,9 @@ public class ItemsCache : IItemsCache
         });
     }
 
-    public IEnumerable<Item> GetItemsCollection(OperationType? type = null)
+    public IEnumerable<Item>? GetItemsCollection(OperationType? type = null)
     {
-        _cache.TryGetValue(GetItemsCollectionCacheKey(type), out IEnumerable<Item> items);
+        _cache.TryGetValue(GetItemsCollectionCacheKey(type), out IEnumerable<Item>? items);
         return items;
     }
     public void SetItemsCollection(IEnumerable<Item> items, OperationType? type = null)
@@ -32,9 +32,9 @@ public class ItemsCache : IItemsCache
         _cache.Remove(GetItemsCollectionCacheKey(type));
     }
 
-    public Item GetItem(int id)
+    public Item? GetItem(int id)
     {
-        _cache.TryGetValue(GetItemCacheKey(id), out Item item);
+        _cache.TryGetValue(GetItemCacheKey(id), out Item? item);
         return item;
     }
     public void SetItem(Item item)

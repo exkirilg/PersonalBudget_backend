@@ -146,7 +146,7 @@ public class ItemsController : ControllerBase
 
     private async Task<IEnumerable<Item>> GetItems(OperationType? type = null)
     {
-        IEnumerable<Item> result;
+        IEnumerable<Item>? result;
 
         result = _cache.GetItemsCollection(type);
         if (result is not null)
