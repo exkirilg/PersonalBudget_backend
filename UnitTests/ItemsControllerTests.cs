@@ -37,16 +37,8 @@ public class ItemsControllerTests
                 .Returns((int i) => Task.FromResult(i <= ItemsCount ? (Item?)_mockItems[i - 1] : null));
 
         _mockRepository
-            .Setup(repo => repo.GetAllByTypesAsync(Enum.GetValues<OperationType>()))
-            .Returns(() => Task.FromResult(_mockItems.AsEnumerable()));
-
-        _mockRepository
-            .Setup(repo => repo.GetAllByTypesAsync(new OperationType[] { OperationType.Income }))
-            .Returns(() => Task.FromResult(_mockItems.Where(i => i.Type == OperationType.Income).AsEnumerable()));
-
-        _mockRepository
-            .Setup(repo => repo.GetAllByTypesAsync(new OperationType[] { OperationType.Expense }))
-            .Returns(() => Task.FromResult(_mockItems.Where(i => i.Type == OperationType.Expense).AsEnumerable()));
+            .Setup(repo => repo.GetAllByTypesAsync(It.IsAny<OperationType[]>()))
+            .Returns((OperationType[] types) => Task.FromResult(_mockItems.Where(i => types.Contains(i.Type)).AsEnumerable()));
 
         _mockRepository
             .Setup(repo => repo.PostAsync(It.IsAny<Item>()))
@@ -73,9 +65,7 @@ public class ItemsControllerTests
 
         _mockCache = new Mock<IItemsCache>();
         _mockCache.Setup(cache => cache.GetItem(It.IsAny<int>())).Returns(() => null);
-        _mockCache.Setup(cache => cache.GetItemsCollection(null)).Returns(() => null);
-        _mockCache.Setup(cache => cache.GetItemsCollection(OperationType.Income)).Returns(() => null);
-        _mockCache.Setup(cache => cache.GetItemsCollection(OperationType.Expense)).Returns(() => null);
+        _mockCache.Setup(cache => cache.GetItemsCollection(It.IsAny<OperationType?>())).Returns(() => null);
 
         #endregion
 
@@ -104,9 +94,9 @@ public class ItemsControllerTests
     }
 
     [Fact]
-    public async void GetById_Found_ReturnsOk()
+    public async void GetById_ReturnsOk()
     {
-        for (int i = 1; i <= ItemsCount; i++)
+        for (int i = 1; i <= _mockItems.Length; i++)
         {
             var result = await _itemsController.GetById(i) as ObjectResult;
 
@@ -121,7 +111,7 @@ public class ItemsControllerTests
     }
 
     [Fact]
-    public async void GetById_NotFound_ReturnsStatus404()
+    public async void GetById_ReturnsStatusNotFound()
     {
         var result = await _itemsController.GetById(_mockItems.Count() + 1) as StatusCodeResult;
 
@@ -159,7 +149,7 @@ public class ItemsControllerTests
     [Theory]
     [InlineData(OperationType.Income, "Test Income")]
     [InlineData(OperationType.Expense, "Test Expense")]
-    public async void Post_ReturnsItem(OperationType type, string name)
+    public async void Post_ReturnsOk(OperationType type, string name)
     {
         var itemDTO = new ItemDTO { Name = name };
        
