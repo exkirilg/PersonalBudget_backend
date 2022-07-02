@@ -53,7 +53,7 @@ public class IdentityController : ControllerBase
     {
         var user = await _userManager.FindByEmailAsync(signinDTO.Email);
 
-        if (user is null || (await CheckPassword(user, signinDTO)) == false)
+        if (user is null || (await CheckPassword(user, signinDTO.Password)) == false)
         {
             ModelState.AddModelError("Authentication", "Incorrect email or password");
             return BadRequest(ModelState);
@@ -71,9 +71,28 @@ public class IdentityController : ControllerBase
             });
     }
 
-    private async Task<bool> CheckPassword(IdentityUser user, SigninDTO signinDTO)
+    [HttpPost("changepassword")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDTO changePasswordDTO)
     {
-        return (await _signInManager.CheckPasswordSignInAsync(user, signinDTO.Password, false)).Succeeded;
+        if (ModelState.IsValid == false)
+            return BadRequest(ModelState);
+
+        var user = await _userManager.GetUserAsync(User);
+
+        if (await CheckPassword(user, changePasswordDTO.CurrentPassword) == false)
+        {
+            ModelState.AddModelError("Authentication", "Incorrect password");
+            return BadRequest(ModelState);
+        }
+
+        await _userManager.ChangePasswordAsync(user, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
+        return Ok();
+    }
+
+    private async Task<bool> CheckPassword(IdentityUser user, string password)
+    {
+        return (await _signInManager.CheckPasswordSignInAsync(user, password, false)).Succeeded;
     }
     private async Task<IEnumerable<Claim>> GetUserClaims(IdentityUser user)
     {
