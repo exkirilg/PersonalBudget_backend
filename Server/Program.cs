@@ -14,6 +14,7 @@ using (var scope = app.Services.CreateScope())
     await seed.EnsureDatabaseMigrationsAsync();
     await seed.EnsureIdentityDbPopulatedAsync();
     await seed.EnsureItemsPopulatedAsync();
+    await seed.EnsureDemoPopulatedAsync();
 }
 
 app.Run();

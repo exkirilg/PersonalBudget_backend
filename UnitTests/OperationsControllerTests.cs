@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Server.Authorization;
-using System.Security.Claims;
-
-namespace UnitTests;
+﻿namespace UnitTests;
 
 public class OperationsControllerTests
 {
