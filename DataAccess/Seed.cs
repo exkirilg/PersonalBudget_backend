@@ -12,16 +12,16 @@ public class Seed
 
     private readonly Item[] _incomeItems = new Item[]
     {
-        new Item { Id = 1, Name = "Salary", Type = OperationType.Income },
-        new Item { Id = 2, Name = "Side Hustle", Type = OperationType.Income }
+        new Item { Name = "Salary", Type = OperationType.Income },
+        new Item { Name = "Side Hustle", Type = OperationType.Income }
     };
     private readonly Item[] _expenseItems = new Item[]
     {
-        new Item { Id = 3, Name = "Rent", Type = OperationType.Expense },
-        new Item { Id = 4, Name = "Groceries", Type = OperationType.Expense },
-        new Item { Id = 5, Name = "Utility Bills", Type = OperationType.Expense },
-        new Item { Id = 6, Name = "Entertaiments", Type = OperationType.Expense },
-        new Item { Id = 7, Name = "Misc", Type = OperationType.Expense }
+        new Item { Name = "Rent", Type = OperationType.Expense },
+        new Item { Name = "Groceries", Type = OperationType.Expense },
+        new Item { Name = "Utility Bills", Type = OperationType.Expense },
+        new Item { Name = "Entertaiments", Type = OperationType.Expense },
+        new Item { Name = "Misc", Type = OperationType.Expense }
     };
 
     public Seed(
